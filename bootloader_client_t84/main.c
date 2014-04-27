@@ -96,7 +96,11 @@ int main()
     nrf24_tx_address(tx_address);
     nrf24_rx_address(rx_address);    
 
+    /* inform the dongle */
+    send_ack(0x04);
+
     nrf24_powerUpRx();
+    led0_high();    
 
     while(1)
     {                            

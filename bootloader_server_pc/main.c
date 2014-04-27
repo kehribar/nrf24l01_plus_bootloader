@@ -27,7 +27,7 @@
 /*---------------------------------------------------------------------------*/
 #define VERBOSE 0
 #define PAGE_SIZE 64
-#define TIMEOUT 1500
+#define TIMEOUT 15
 #define FLASH_SIZE 32768
 #define RETRY_COUNT 1000
 #define BOOTLADER_SIZE 2048
@@ -407,7 +407,7 @@ int main(int argc, char**argv)
 		printf("[err]: Trial threshold is reached\n");
 		return 0;
 	}	
-
+		
 	/*-----------------------------------------------------------------------*/
 
 	printf("> Erasing the memory ...\n");		

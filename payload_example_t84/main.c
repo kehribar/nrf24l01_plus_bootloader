@@ -58,10 +58,10 @@ int main()
     uint16_t rval;
     uint16_t getDataCounter;
 
-    init_hardware();
+    init_hardware();    
 
     while(1)
-    {                        
+    {                                
         /* power up the temperature sensor */
         pinMode(A,2,OUTPUT);
         digitalWrite(A,2,HIGH);
@@ -102,7 +102,7 @@ int main()
         check_bootloader_message(10);
 
         /* parameter for this function is WDT overflow count */
-        sleep_for(10);
+        sleep_for(25);
     }
 
     return 0;
@@ -214,18 +214,20 @@ void check_bootloader_message(uint8_t timeout)
     nrf24_powerUpRx();    
     while(getDataCounter++ < timeout)
     {
-        _delay_us(50);
+        _delay_us(10);
         if(nrf24_dataReady())
         {    
             nrf24_getData(data_array);        
             if((data_array[0] == 0) && (data_array[1] == 0xAA))
-            {
+            {        
+                /* prepare */
                 cli();
                 PORTA = 0x00;
                 PORTB = 0x00;
                 DDRA = 0x00;
                 DDRB = 0x00;
                 sleep_disable();
+
                 /* jump to bootloader! */
                 /* bootloader is located at: 0x1800 */
                 asm volatile("lds r31, 0x18"); // R31 = ZH
@@ -249,6 +251,5 @@ void send_ack(uint8_t cmd)
 
     nrf24_send(data_array);
     while(nrf24_isSending());
-    nrf24_powerUpRx();  
 }
 /*---------------------------------------------------------------------------*/

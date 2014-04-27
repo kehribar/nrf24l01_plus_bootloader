@@ -23,27 +23,13 @@
 #include <sys/stat.h>
 /*---------------------------------------------------------------------------*/
 #include "serial_lib.h"
-#include "intel_hex_parser.h"
 /*---------------------------------------------------------------------------*/
 #define VERBOSE 0
-#define PAGE_SIZE 64
 #define TIMEOUT 15
-#define FLASH_SIZE 32768
-#define RETRY_COUNT 1000
-#define BOOTLADER_SIZE 2048
-#define MAX_RADIO_PAYLOAD 31
 /*---------------------------------------------------------------------------*/
-struct timeval ct;
-uint32_t last_sec = 0;
-uint32_t last_usec = 0;
-uint32_t current_sec = 0;
-uint32_t current_usec = 0;
-/*---------------------------------------------------------------------------*/
-uint8_t pageBuffer[512];
 uint8_t dataBuffer[65536];
 uint8_t tx_addressBuffer[5];
 uint8_t rx_addressBuffer[5];
-uint8_t programBuffer[65536];
 /*---------------------------------------------------------------------------*/
 int getTransmissionResult(int serialPort)
 {
@@ -178,56 +164,6 @@ int sendRadioMessage(int serialPort, uint8_t* buf, int len)
 		return -1;
 	}
 }
-/*---------------------------------------------------------------------------*/
-int checkTaskState(int serialPort)
-{
-	// ...
-	return (int8_t)dataBuffer[0];
-}
-/*---------------------------------------------------------------------------*/
-void setSlaveAddress(int serialPort, uint8_t* slaveAddress)
-{
-	/* command */
-	dataBuffer[0] = 's'; 
-
-	/* slave address */
-	dataBuffer[1] = slaveAddress[0];
-	dataBuffer[2] = slaveAddress[1];
-	dataBuffer[3] = slaveAddress[2];
-	dataBuffer[4] = slaveAddress[3];
-	dataBuffer[5] = slaveAddress[4];
-
-	// write(serialPort, dataBuffer, 6);
-}
-/*---------------------------------------------------------------------------*/
-int resetDevice(int serialPort)
-{
-	dataBuffer[0] = 3; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 0; /* radio command */
-	dataBuffer[3] = 0xAA; /* payload data */
-
-	return sendRadioMessage(serialPort,dataBuffer,4);
-}
-/*---------------------------------------------------------------------------*/
-int eraseFlash(int serialPort)
-{
-	dataBuffer[0] = 2; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 3; /* radio command */
-
-	return sendRadioMessage(serialPort,dataBuffer,3);
-}
-/*---------------------------------------------------------------------------*/
-int jumpUserApp(int serialPort)
-{
-	dataBuffer[0] = 2; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 4; /* radio command */
-
-	return sendRadioMessage(serialPort,dataBuffer,3);
-}
-/*---------------------------------------------------------------------------*/
 int setTXAddress(int serialPort, uint8_t* buf)
 {
 	dataBuffer[0] = 6; /* msg len */
@@ -272,71 +208,6 @@ int setRXAddress(int serialPort, uint8_t* buf)
 	}
 	
 	return 0;
-}
-/*---------------------------------------------------------------------------*/
-int writePage(int serialPort, uint8_t* pageBuffer, uint16_t pageOffset, uint16_t pageSize)
-{	
-	/* Fixed scenario for 64 length payload size */
-	/* Send as 20, 20, 24 size three packets */
-	/* TODO: Change that! */
-
-	dataBuffer[0] = 24; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 1; /* radio command */
-	dataBuffer[3] = 0; /* start index */
-	dataBuffer[4] = 20; /* length */
-
-	for (int i = 0; i < 20; ++i)
-	{
-		dataBuffer[5+i] = pageBuffer[i];
-	}
-
-	if(sendRadioMessage(serialPort,dataBuffer,25) == -1)
-	{
-		return -1;
-	}
-
-	dataBuffer[0] = 24; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 1; /* radio command */
-	dataBuffer[3] = 20; /* start index */
-	dataBuffer[4] = 20; /* length */
-
-	for (int i = 0; i < 20; ++i)
-	{
-		dataBuffer[5+i] = pageBuffer[20+i];
-	}
-
-	if(sendRadioMessage(serialPort,dataBuffer,25) == -1)
-	{
-		return -1;
-	}
-
-	dataBuffer[0] = 28; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 1; /* radio command */
-	dataBuffer[3] = 40; /* start index */
-	dataBuffer[4] = 24; /* length */
-
-	for (int i = 0; i < 24; ++i)
-	{
-		dataBuffer[5+i] = pageBuffer[40+i];
-	}
-
-	if(sendRadioMessage(serialPort,dataBuffer,29) == -1)
-	{
-		return -1;
-	}
-
-	dataBuffer[0] = 6; /* msg len */
-	dataBuffer[1] = 5; /* uC command */
-	dataBuffer[2] = 2; /* radio command */
-	dataBuffer[3] = (pageOffset & 0x000000FF);
-	dataBuffer[4] = (pageOffset & 0x0000FF00)>>8;
-	dataBuffer[5] = (pageOffset & 0x00FF0000)>>16;
-	dataBuffer[6] = (pageOffset & 0xFF000000)>>24;
-	
-	return sendRadioMessage(serialPort,dataBuffer,7);
 }
 /*---------------------------------------------------------------------------*/
 /* taken from: http://stackoverflow.com/a/7776146 */
@@ -388,17 +259,12 @@ int main(int argc, char**argv)
 {
 	int i;
 	int fd = 0;
-	int offset;    
-	int pageNumber;
 	uint16_t trial = 0;
-	int endAddress = 0;
-	int startAddress = 1;
-	char* fileName = NULL;
 	char* portPath = NULL;
 	char* rx_addressString = NULL;
 	char* tx_addressString = NULL;
 
-	printf("> Computer side software for tea-bootloader\n");        
+	printf("> Simple message listener for tea-bootloader compatible nodes\n");        
 	
 	/*-----------------------------------------------------------------------*/
 	
@@ -429,13 +295,13 @@ int main(int argc, char**argv)
     }
     else
    	{
-        printf("[dbg]: Conection OK.\n");
+        printf("> Conection OK.\n");
         serialport_flush(fd);
-        printf("[dbg]: Serial port flush OK.\n");   
+        printf("> Serial port flush OK.\n");   
 
         if(loopbackTest(fd) != 0)
         {
-        	printf("Loopback test failed!\r\n");
+        	printf("> Loopback test failed!\r\n");
         	return 0;
         }
         else

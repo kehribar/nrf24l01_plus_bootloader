@@ -5,8 +5,8 @@
 #
 #------------------------------------------------------------------------------ 
 APP_NAME = main 
-HEADERS = intel_hex_parser.h
-OBJECTS = main.o intel_hex_parser.o serial_lib.o
+HEADERS = serial_lib.h
+OBJECTS = main.o serial_lib.o
 
 default: $(APP_NAME)
 

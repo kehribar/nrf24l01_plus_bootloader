@@ -102,7 +102,7 @@ int main()
     nrf24_powerUpRx();
 
     while(1)
-    {                            
+    {                 
         if(nrf24_dataReady())
         {            
             nrf24_getData(data_array);

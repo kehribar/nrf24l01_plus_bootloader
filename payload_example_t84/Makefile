@@ -12,7 +12,7 @@ CSRC    = main.c nrf24.c radioPinFunctions.c
 ASRC    = 
 VPATH   = ./util ..
 DEVICE  = attiny84
-F_OSC   = 1000000
+F_OSC   = 8000000
 AVRDUDE = avrdude -c usbtiny -p t84 -U flash:w:$(PROJECT).hex -B 3
 
 ###############################################################################

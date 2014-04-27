@@ -31,7 +31,7 @@ uint8_t resetTaskActive = 0;
 #define getLowByte(word) (word&0xFF)
 /* ------------------------------------------------------------------------- */
 RingBuffer_t Buffer; /* ring buffer for incoming radio messages */
-uint8_t      BufferData[1024 ];
+uint8_t      BufferData[1024];
 /* ------------------------------------------------------------------------- */
 volatile uint8_t msgLen;
 volatile uint8_t bufCount;
@@ -61,8 +61,13 @@ ISR(USART_RX_vect)
 /* ------------------------------------------------------------------------- */
 void uart_init()
 {
-    /* 38400 baud rate with 16 MHz Xtal ... */
-    const uint8_t ubrr = 51; 
+    #if 0
+        /* 38400 baud rate with 16 MHz Xtal ... */
+        const uint8_t ubrr = 51; 
+    #else
+        /* 115200 baud rate with 16 MHz Xtal ... */
+        const uint8_t ubrr = 16; 
+    #endif
     
     UCSR0A = (1<<U2X0);
 

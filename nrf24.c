@@ -12,6 +12,8 @@
 * -----------------------------------------------------------------------------
 */
 #include "nrf24.h"
+#include <avr/io.h>
+#include <util/delay.h>
 
 uint8_t payload_len;
 
@@ -21,6 +23,16 @@ void nrf24_init()
     nrf24_setupPins();
     nrf24_ce_digitalWrite(LOW);
     nrf24_csn_digitalWrite(HIGH);    
+
+    #if defined (__AVR_ATmega328P__)
+        /* Set SS pin output */
+        DDRB |= (1<<2); 
+
+        /* Set SPI peripheral @Fosc/2 */
+        SPCR = (1<<SPE)|(1<<MSTR);
+        SPSR |= (1<<SPI2X);
+    #endif
+
 }
 
 /* configure the module */
@@ -267,36 +279,60 @@ void nrf24_powerDown()
 /* software spi routine */
 uint8_t spi_transfer(uint8_t tx)
 {
-    uint8_t i = 0;
-    uint8_t rx = 0;    
+    #if defined(__AVR_ATtiny84__)            
+        
+        USIDR = tx;
+        USISR = _BV(USIOIF); // clear flag
 
-    nrf24_sck_digitalWrite(LOW);
-
-    for(i=0;i<8;i++)
-    {
-
-        if(tx & (1<<(7-i)))
+        while ( (USISR & _BV(USIOIF)) == 0 ) 
         {
-            nrf24_mosi_digitalWrite(HIGH);            
-        }
-        else
-        {
-            nrf24_mosi_digitalWrite(LOW);
+            USICR = (1<<USIWM0)|(1<<USICS1)|(1<<USICLK)|(1<<USITC);
         }
 
-        nrf24_sck_digitalWrite(HIGH);        
+        return USIDR;
 
-        rx = rx << 1;
-        if(nrf24_miso_digitalRead())
+    #elif defined (__AVR_ATmega328P__)                
+
+        uint8_t reply;
+        SPDR = tx;   
+        while(!(SPSR & (1<<SPIF)));
+        reply = SPDR;
+        return reply;
+
+    #else
+        
+        uint8_t i = 0;
+        uint8_t rx = 0;    
+
+        nrf24_sck_digitalWrite(LOW);
+
+        for(i=0;i<8;i++)
         {
-            rx |= 0x01;
+
+            if(tx & (1<<(7-i)))
+            {
+                nrf24_mosi_digitalWrite(HIGH);            
+            }
+            else
+            {
+                nrf24_mosi_digitalWrite(LOW);
+            }
+
+            nrf24_sck_digitalWrite(HIGH);        
+
+            rx = rx << 1;
+            if(nrf24_miso_digitalRead())
+            {
+                rx |= 0x01;
+            }
+
+            nrf24_sck_digitalWrite(LOW);                
+
         }
 
-        nrf24_sck_digitalWrite(LOW);                
-
-    }
-
-    return rx;
+        return rx;
+    
+    #endif
 }
 
 /* send and receive multiple bytes over SPI */

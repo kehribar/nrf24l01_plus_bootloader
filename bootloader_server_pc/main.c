@@ -33,6 +33,12 @@
 #define BOOTLADER_SIZE 2048
 #define MAX_RADIO_PAYLOAD 31
 /*---------------------------------------------------------------------------*/
+struct timeval ct;
+uint32_t last_sec = 0;
+uint32_t last_usec = 0;
+uint32_t current_sec = 0;
+uint32_t current_usec = 0;
+/*---------------------------------------------------------------------------*/
 uint8_t pageBuffer[512];
 uint8_t addressBuffer[5];
 uint8_t dataBuffer[65536];
@@ -358,7 +364,7 @@ int main(int argc, char**argv)
 
 	/*-----------------------------------------------------------------------*/	   
 
-    fd = serialport_init(portPath,38400,'n');
+    fd = serialport_init(portPath,115200,'n');
 
     if(fd < 0)
     {
@@ -428,6 +434,11 @@ int main(int argc, char**argv)
 		printf("[err]: Trial threshold is reached\n");
 		return 0;
 	}
+
+	gettimeofday(&ct, NULL);
+
+    last_usec = ct.tv_usec;
+    last_sec = ct.tv_sec;
 
 	/*-----------------------------------------------------------------------*/
 
@@ -516,6 +527,17 @@ int main(int argc, char**argv)
 	/*-----------------------------------------------------------------------*/
 
 	printf("> Job is done! Thanks.\n");
+
+	gettimeofday(&ct, NULL);
+
+    current_usec = ct.tv_usec;
+    current_sec = ct.tv_sec;	
+
+    float interval;
+
+    interval = (((1000 * 1000 * (current_sec - last_sec)) + (current_usec) - last_usec))/1000.0;
+
+    printf("> Upload took %f ms\n",interval); 
 
 	return 0;
 }

@@ -101,7 +101,7 @@ int main()
         check_bootloader_message(10);
 
         /* parameter for this function is WDT overflow count */
-        sleep_for(25);
+        sleep_for(5);
     }
 
     return 0;
@@ -163,7 +163,7 @@ void init_hardware()
     /* initial power-down */
     nrf24_powerDown();
 
-    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(1<<PRUSI);
+    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(0<<PRUSI);
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);  
     sleep_enable();
 }
@@ -193,7 +193,7 @@ void sleep_for(uint8_t wdt_overflow_count)
     WDTCSR = 0x00;    
 
     /* enable the ADC and the USI peripheral, leave the timers disabled */
-    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(1<<PRUSI);        
+    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(0<<PRUSI);        
 }
 /*---------------------------------------------------------------------------*/
 void sleep_during_transmisson()

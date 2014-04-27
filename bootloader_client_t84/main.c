@@ -100,7 +100,6 @@ int main()
     send_ack(0x04);
 
     nrf24_powerUpRx();
-    led0_high();    
 
     while(1)
     {                            

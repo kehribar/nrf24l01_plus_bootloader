@@ -45,7 +45,6 @@ ISR(WDT_vect)
 /*---------------------------------------------------------------------------*/
 uint16_t read_adc();
 void init_hardware();
-void send_ack(uint8_t cmd);
 void init_adc(uint8_t ch);
 void sleep_during_transmisson();
 void sleep_for(uint8_t wdt_overflow_count);
@@ -237,19 +236,5 @@ void check_bootloader_message(uint8_t timeout)
         }                            
     }        
     nrf24_powerDown();
-}
-/*---------------------------------------------------------------------------*/
-void send_ack(uint8_t cmd)
-{
-    const uint8_t dongle_address[5] = {0xBE,0xEF,0xBE,0xEF,0x01};
-
-    nrf24_tx_address(dongle_address); 
-
-    data_array[0] = 0xAA;
-    data_array[1] = cmd;
-    data_array[2] = 0xAA;            
-
-    nrf24_send(data_array);
-    while(nrf24_isSending());
 }
 /*---------------------------------------------------------------------------*/

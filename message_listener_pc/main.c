@@ -25,7 +25,7 @@
 #include "serial_lib.h"
 /*---------------------------------------------------------------------------*/
 #define VERBOSE 0
-#define TIMEOUT 15
+#define TIMEOUT 150
 /*---------------------------------------------------------------------------*/
 uint8_t dataBuffer[65536];
 uint8_t tx_addressBuffer[5];
@@ -320,7 +320,10 @@ int main(int argc, char**argv)
     while(1)
     {
     	uint8_t thisBuffer[1024];
+    	char sendBuffer[256];
     	uint8_t len;
+    	int temp;
+    	float realval;
     	if(getRxFifoCount(fd))
     	{
     		len = getRxFifoCount(fd);
@@ -329,7 +332,18 @@ int main(int argc, char**argv)
     		printf("> Length: %d\n",len);
     		pullDataFromFifo(fd,len,thisBuffer);
     		
-			hexDump("> Dump",thisBuffer,len);
+			hexDump("> Dump",thisBuffer,len);			
+
+			temp = (thisBuffer[0]<<8)+thisBuffer[1];
+			realval  = ((float)temp * 1100.0) / 1024.0;              
+        	realval -= 500;
+        	realval /= 10.0;
+
+			printf("> Raw: %d\n",temp);
+        	printf("> Readout: %f\n",realval);
+			sprintf(sendBuffer,"./xively_client.py %f",realval);
+			system(sendBuffer);
+			printf("> Xively send process done.\n");
     	}
     }
 

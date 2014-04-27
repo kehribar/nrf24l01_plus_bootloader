@@ -342,6 +342,8 @@ int main(int argc, char**argv)
 	else
 	{
 		printf("> Argument parsing error!\n");
+		printf("> Usage: ./main [port path] [node RX address] [firmware path]\n");
+		printf("> Example: ./main /dev/tty.usbserial-A900cbrd 0xD7:0xD7:0xD7:0xD7:0xD7 ./payload.hex\n");
 		return 0;
 	}
 	

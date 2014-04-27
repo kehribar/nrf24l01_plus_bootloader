@@ -131,6 +131,7 @@ void handle_newMessage()
         case 3: /* set rx address */
         {
             nrf24_rx_address((uint8_t*)(rxBuffer+1));
+            uart_put_char(DONE);
             break;
         }
         case 4: /* set tx address */
@@ -154,13 +155,24 @@ void handle_newMessage()
         case 7: /* get last transmission result */
         {
             lastMessageStatus = nrf24_lastMessageStatus();            
-            nrf24_powerUpRx();
+            if(listeningMode)
+            {
+                nrf24_powerUpRx();
+            }
             uart_put_char(lastMessageStatus);
             break;
         }
         case 8: /* set listening mode */
         {
-            
+            listeningMode = rxBuffer[1];
+            if(listeningMode)
+            {
+                nrf24_powerUpRx();
+            }
+            else
+            {
+                nrf24_powerDown();
+            }
             break;
         }
         case 9: /* get rx buffer fifo count */

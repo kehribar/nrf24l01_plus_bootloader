@@ -101,7 +101,7 @@ int main()
         check_bootloader_message(10);
 
         /* parameter for this function is WDT overflow count */
-        sleep_for(5);
+        sleep_for(25);
     }
 
     return 0;

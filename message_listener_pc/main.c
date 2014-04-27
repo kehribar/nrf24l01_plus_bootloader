@@ -326,21 +326,21 @@ int main(int argc, char**argv)
     	float realval;
     	if(getRxFifoCount(fd))
     	{
-    		len = getRxFifoCount(fd);
-    		printf("> ---------------------------------------------------------------------------\n");
-    		printf("> New message!\n");
-    		printf("> Length: %d\n",len);
-    		pullDataFromFifo(fd,len,thisBuffer);
-    		
+			len = getRxFifoCount(fd);
+			printf("> ---------------------------------------------------------------------------\n");
+			printf("> New message!\n");
+			printf("> Length: %d\n",len);
+			pullDataFromFifo(fd,len,thisBuffer);
+
 			hexDump("> Dump",thisBuffer,len);			
 
 			temp = (thisBuffer[0]<<8)+thisBuffer[1];
 			realval  = ((float)temp * 1100.0) / 1024.0;              
-        	realval -= 500;
-        	realval /= 10.0;
+			realval -= 500;
+			realval /= 10.0;
 
 			printf("> Raw: %d\n",temp);
-        	printf("> Readout: %f\n",realval);
+			printf("> Readout: %f\n",realval);
 			sprintf(sendBuffer,"./xively_client.py %f",realval);
 			system(sendBuffer);
 			printf("> Xively send process done.\n");

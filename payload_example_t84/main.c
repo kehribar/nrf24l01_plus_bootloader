@@ -61,14 +61,14 @@ int main()
     init_hardware();
 
     while(1)
-    {                
+    {                        
         /* power up the temperature sensor */
         pinMode(A,2,OUTPUT);
         digitalWrite(A,2,HIGH);
 
         /* prepare reading the 1st ADC channel */
         init_adc(0x01);
-        _delay_us(10);
+        _delay_us(10);        
 
         /* take multiple readings and divide later */
         rval = 0;
@@ -78,10 +78,14 @@ int main()
         }
         rval = rval >> 3;
 
+        /* reset ADC registers */
+        ADCSRA = 0x00;
+        ADMUX = 0x00;
+
         /* power down the temperature sensor */
         digitalWrite(A,2,LOW);
         pinMode(A,2,INPUT);
-
+        
         /* fill the data buffer */
         data_array[0] = rval >> 8;
         data_array[1] = rval & 0xFF;
@@ -95,7 +99,7 @@ int main()
         sleep_during_transmisson();        
 
         /* parameter for this function determines how long does it wait for a message */
-        check_bootloader_message(5);
+        check_bootloader_message(10);
 
         /* parameter for this function is WDT overflow count */
         sleep_for(10);
@@ -160,19 +164,19 @@ void init_hardware()
     /* initial power-down */
     nrf24_powerDown();
 
-    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(0<<PRUSI);
+    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(1<<PRUSI);
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);  
     sleep_enable();
 }
 /*---------------------------------------------------------------------------*/
 void sleep_for(uint8_t wdt_overflow_count)
-{
+{    
     /* disable timers, ADC and the USI */
     PRR = (1<<PRTIM1)|(1<<PRTIM0)|(1<<PRADC)|(1<<PRUSI);    
     
     /* set WDT parameters */
     WDTCSR = _BV (WDCE) | _BV (WDE);
-    WDTCSR = _BV (WDIE) | _BV (WDP1) | _BV (WDP2); // 1 sec
+    WDTCSR = _BV (WDIE) | _BV (WDP1) | _BV (WDP2); // 1 sec    
     
     /* get ready for the ISR */
     wdt_reset();    
@@ -190,7 +194,7 @@ void sleep_for(uint8_t wdt_overflow_count)
     WDTCSR = 0x00;    
 
     /* enable the ADC and the USI peripheral, leave the timers disabled */
-    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(0<<PRUSI);        
+    PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(1<<PRUSI);        
 }
 /*---------------------------------------------------------------------------*/
 void sleep_during_transmisson()
@@ -210,7 +214,7 @@ void check_bootloader_message(uint8_t timeout)
     nrf24_powerUpRx();    
     while(getDataCounter++ < timeout)
     {
-        _delay_us(10);
+        _delay_us(50);
         if(nrf24_dataReady())
         {    
             nrf24_getData(data_array);        

@@ -213,7 +213,7 @@ void check_bootloader_message(uint8_t timeout)
     nrf24_powerUpRx();    
     while(getDataCounter++ < timeout)
     {
-        _delay_us(10);
+        _delay_ms(1);        
         if(nrf24_dataReady())
         {    
             nrf24_getData(data_array);        
@@ -232,7 +232,7 @@ void check_bootloader_message(uint8_t timeout)
                 asm volatile("lds r31, 0x18"); // R31 = ZH
                 asm volatile("lds r30, 0x00"); // R30 = ZL
                 asm volatile("icall"); // Jump to the Z register value
-            }
+            }            
         }                            
     }        
     nrf24_powerDown();

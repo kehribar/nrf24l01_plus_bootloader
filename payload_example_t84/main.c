@@ -43,9 +43,15 @@ ISR(WDT_vect)
     wdt_counter++;
 }
 /*---------------------------------------------------------------------------*/
+ISR(ADC_vect) 
+{ 
+   /* just wake up ... */
+} 
+/*---------------------------------------------------------------------------*/
 uint16_t read_adc();
 void init_hardware();
 void init_adc(uint8_t ch);
+uint16_t read_adc_sleepy();
 void sleep_during_transmisson();
 void sleep_for(uint8_t wdt_overflow_count);
 void check_bootloader_message(uint8_t timeout);
@@ -67,18 +73,13 @@ int main()
 
         /* prepare reading the 1st ADC channel */
         init_adc(0x01);
-        _delay_us(10);        
-        
-        /* first readings are junk? */        
-        read_adc(); 
-        read_adc(); 
-        read_adc(); 
+        _delay_us(100);                
 
         /* take multiple readings and divide later */
         rval = 0;
         for (i = 0; i < 8; ++i)
         {
-            rval += read_adc();
+            rval += read_adc_sleepy();
         }
         rval = rval >> 3;
 
@@ -136,6 +137,29 @@ uint16_t read_adc()
     return value;
 }
 /*---------------------------------------------------------------------------*/
+uint16_t read_adc_sleepy()
+{
+    uint16_t value;
+
+    set_sleep_mode(SLEEP_MODE_ADC); 
+    sleep_enable();
+
+    /* enable the adc finished interrupt */
+    sbi(ADCSRA,ADIE);
+    sei();
+
+    /* go to sleep ... */
+    sleep_mode();
+
+    /* close the interrupt */
+    cli();
+
+    value = ADCL;       
+    value += ADCH << 8; // Read the result
+    
+    return value;
+}
+/*---------------------------------------------------------------------------*/
 void init_hardware()
 {
     /* init interrupt pin */
@@ -168,13 +192,17 @@ void init_hardware()
     /* initial power-down */
     nrf24_powerDown();
 
+    /* disable digital buffer at the adc pin */
+    cbi(DIDR0,ADC1D);
+
     PRR = (1<<PRTIM1)|(1<<PRTIM0)|(0<<PRADC)|(0<<PRUSI);
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);  
-    sleep_enable();
 }
 /*---------------------------------------------------------------------------*/
 void sleep_for(uint8_t wdt_overflow_count)
 {    
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);  
+    sleep_enable();
+
     /* disable timers, ADC and the USI */
     PRR = (1<<PRTIM1)|(1<<PRTIM0)|(1<<PRADC)|(1<<PRUSI);    
     

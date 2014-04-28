@@ -68,6 +68,11 @@ int main()
         /* prepare reading the 1st ADC channel */
         init_adc(0x01);
         _delay_us(10);        
+        
+        /* first readings are junk? */        
+        read_adc(); 
+        read_adc(); 
+        read_adc(); 
 
         /* take multiple readings and divide later */
         rval = 0;

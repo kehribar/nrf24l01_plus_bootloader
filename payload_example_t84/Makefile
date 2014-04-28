@@ -13,7 +13,8 @@ ASRC    =
 VPATH   = ./util ..
 DEVICE  = attiny84
 F_OSC   = 8000000
-AVRDUDE = avrdude -c usbtiny -p t84 -U flash:w:$(PROJECT).hex -B 3
+AVRDUDE = avrdude -c usbtiny -p t85 -U flash:w:$(PROJECT).hex -B 3
+BOOTLOADER = ../bootloader_server_pc/main /dev/tty.usbserial-A900cbrd 0xD7:0xD7:0xD7:0xD7:0xD7 ./obj/main.hex 
 
 ###############################################################################
 #
@@ -168,4 +169,6 @@ upload:
 	@echo
 	$(AVRDUDE) 
 
-
+bootloader:
+	@echo
+	$(BOOTLOADER)

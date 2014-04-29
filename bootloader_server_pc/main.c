@@ -397,6 +397,7 @@ int main(int argc, char**argv)
 
 	/*-----------------------------------------------------------------------*/	
 
+ 	printf("\a");
 	printf("> Trying to reset the device ...\n");	
 
 	trial = 0;
@@ -418,6 +419,7 @@ int main(int argc, char**argv)
 		
 	/*-----------------------------------------------------------------------*/
 
+	printf("\a");
 	printf("> Erasing the memory ...\n");		
 
 	trial = 0;
@@ -501,6 +503,7 @@ int main(int argc, char**argv)
 
 	/*-----------------------------------------------------------------------*/
 	
+	printf("\a");
 	printf("\n> Upload is finished!\n");
 	printf("> Jumping to the user code ...\n");
 	

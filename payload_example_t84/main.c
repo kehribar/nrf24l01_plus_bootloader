@@ -59,7 +59,7 @@ void check_bootloader_message(uint8_t timeout);
 int main()
 {
     uint8_t i;
-    uint8_t temp;    
+    uint16_t temp;    
     uint16_t rval;
     uint16_t getDataCounter;
 
@@ -73,15 +73,25 @@ int main()
 
         /* prepare reading the 1st ADC channel */
         init_adc(0x01);
-        _delay_us(100);                
+        _delay_us(750);
 
         /* take multiple readings and divide later */
         rval = 0;
         for (i = 0; i < 8; ++i)
         {
-            rval += read_adc_sleepy();
+            temp = read_adc_sleepy();
+            
+            /* store each sample seperatly */
+            data_array[(2*i)+2] = temp >> 8;
+            data_array[(2*i)+3] = temp & 0xFF;        
+            
+            rval += temp;
         }
         rval = rval >> 3;
+
+        /* Store the averages */
+        data_array[0] = rval >> 8;
+        data_array[1] = rval & 0xFF;
 
         /* reset ADC registers */
         ADCSRA = 0x00;
@@ -89,13 +99,7 @@ int main()
 
         /* power down the temperature sensor */
         digitalWrite(A,2,LOW);
-        pinMode(A,2,INPUT);
-        
-        /* fill the data buffer */
-        data_array[0] = rval >> 8;
-        data_array[1] = rval & 0xFF;
-        data_array[2] = 0xAA;
-        data_array[3] = q++;                                            
+        pinMode(A,2,INPUT);                                          
 
         /* automatically goes to TX mode */
         nrf24_send(data_array);        
@@ -147,6 +151,9 @@ uint16_t read_adc_sleepy()
     /* enable the adc finished interrupt */
     sbi(ADCSRA,ADIE);
     sei();
+
+    /* start conversion */
+    sbi(ADCSRA,ADSC); 
 
     /* go to sleep ... */
     sleep_mode();

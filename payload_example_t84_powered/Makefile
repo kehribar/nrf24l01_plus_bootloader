@@ -14,7 +14,10 @@ VPATH   = ./util ..
 DEVICE  = attiny84
 F_OSC   = 8000000
 AVRDUDE = avrdude -c usbtiny -p t84 -U flash:w:$(PROJECT).hex -B 3
-BOOTLOADER = ../bootloader_server_pc/main /dev/tty.usbserial-A900cbrd 0xD7:0xD7:0xD7:0xD7:0xD7 ./obj/main.hex 
+ADDRESS = 0xD7:0xD7:0xD7:0xD7:0xD0
+PORT 	= /dev/tty.usbserial-A900cbrd
+BOOTLOADER = ../bootloader_server_pc/main $(PORT) $(ADDRESS) ./obj/main.hex 
+FUSE 	= avrdude -c usbtiny -p t84 -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xfe:m -B 3
 
 ###############################################################################
 #
@@ -172,3 +175,7 @@ upload:
 bootloader:
 	@echo
 	$(BOOTLOADER)
+
+fuse:
+	@echo
+	$(FUSE)

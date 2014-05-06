@@ -32,7 +32,7 @@ uint8_t pageBuf[SPM_PAGESIZE];
 uint8_t data_array[32];
 uint8_t loopCounter = 0;
 uint8_t tx_address[5] = {0xBE,0xEF,0xBE,0xEF,0x01};
-uint8_t rx_address[5] = {0xD7,0xD7,0xD7,0xD7,0xD7};
+uint8_t rx_address[5] = {0xD7,0xD7,0xD7,0xD7,0xD0};
 /*---------------------------------------------------------------------------*/
 static void boot_program_page(uint32_t pageOffset, uint8_t *buf)
 {

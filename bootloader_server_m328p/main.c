@@ -16,16 +16,10 @@
 #include "./util/xprintf.h"
 #include <avr/interrupt.h> 
 /* ------------------------------------------------------------------------- */
-#define rx_on() digitalWrite(C,2,HIGH); rxActivated=1; 
-#define rx_off() digitalWrite(C,2,LOW); rxActivated=0; 
-#define is_rx_on() (rxActivated == 1)
-uint8_t lastMessageStatus;
-/* ------------------------------------------------------------------------- */
 #define DONE 0xAA
 #define VERSION 0x10
-uint8_t rxActivated = 0;
 uint8_t listeningMode = 1;
-uint8_t resetTaskActive = 0;
+uint8_t lastMessageStatus;
 /* ------------------------------------------------------------------------- */
 #define getHighByte(word) (word>>8)
 #define getLowByte(word) (word&0xFF)
@@ -110,9 +104,15 @@ void handle_newMessage()
 
     switch(rxBuffer[0])
     {
-        case 0: /* blink a LED */
+        case 0: /* blink an LED */
         {
-            togglePin(C,0);
+            digitalWrite(C,0,HIGH);
+            _delay_ms(20);
+            digitalWrite(C,0,LOW);
+            _delay_ms(20);
+            digitalWrite(C,0,HIGH);
+            _delay_ms(20);
+            digitalWrite(C,0,LOW);
             break;
         }
         case 1: /* read version */
@@ -142,7 +142,6 @@ void handle_newMessage()
         }
         case 5: /* send message */
         {                   
-            togglePin(C,5);
             nrf24_send((uint8_t*)(rxBuffer+1));                                                            
             uart_put_char(DONE);
             break;
@@ -227,7 +226,6 @@ void handle_nrf24_data()
     {
         RingBuffer_Insert(&Buffer,data_array[i++]);
     }
-    togglePin(C,1);
 }
 /* ------------------------------------------------------------------------- */
 int main()
@@ -237,13 +235,8 @@ int main()
     /* init the radio buffer */
     RingBuffer_InitBuffer(&Buffer, BufferData, sizeof(BufferData));
  
-    /* init debug leds */
+    /* init debug led */
     pinMode(C,0,OUTPUT);
-    pinMode(C,1,OUTPUT);
-    pinMode(C,2,OUTPUT);
-    pinMode(C,3,OUTPUT);
-    pinMode(C,4,OUTPUT);
-    pinMode(C,5,OUTPUT);
 
     /* init the software uart */
     uart_init();
@@ -258,15 +251,7 @@ int main()
     nrf24_tx_address(tx_address);
     nrf24_rx_address(rx_address);
 
-    xdev_out(uart_put_char);
-
     sei();
-
-    togglePin(C,1);togglePin(C,1);
-    togglePin(C,1);togglePin(C,1);
-
-    nrf24_tx_address(tx_address);
-    nrf24_rx_address(rx_address);
 
     while(1)
     {    
@@ -277,10 +262,6 @@ int main()
 
         if(nrf24_dataReady())
         {
-            if(nrf24_dataReady() != 0xFF)
-            {
-                togglePin(C,2);
-            }
             handle_nrf24_data();
         }
 

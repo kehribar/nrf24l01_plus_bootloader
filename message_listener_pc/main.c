@@ -341,9 +341,9 @@ int main(int argc, char**argv)
 
 			printf("> Raw: %d\n",temp);
 			printf("> Readout: %f\n",realval);
-			sprintf(sendBuffer,"./xively_client.py %f",realval);
+			sprintf(sendBuffer,"./phant_client.rb %f",realval);
 			system(sendBuffer);
-			printf("> Xively send process done.\n");
+			printf("> Phant.io send process done.\n");
     	}
     }
 
